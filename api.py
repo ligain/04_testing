@@ -95,7 +95,8 @@ class ArgumentsField(BaseField):
 class EmailField(CharField):
     def __set__(self, instance, value):
         super(EmailField, self).__set__(instance, value)
-        if isinstance(self.value, basestring) and "@" not in value:
+        if isinstance(self.value, basestring) and \
+                        "@" not in value and len(value):
             raise ValidationError("@ character should be in EmailField")
 
 
