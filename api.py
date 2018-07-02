@@ -156,7 +156,8 @@ class ClientIDsField(BaseField):
         super(ClientIDsField, self).__set__(instance, value)
         if isinstance(value, Sized) and len(value) <= 0:
             raise ValidationError("The field must contain more than one id")
-        if not all(map(lambda i: isinstance(i, int), value)):
+        if isinstance(value, Sequence) and \
+                not all(map(lambda i: isinstance(i, int), value)):
             raise ValidationError("All members should have type int")
         instance.fields[self.field_name].value = value
 
