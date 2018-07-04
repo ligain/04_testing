@@ -53,18 +53,25 @@ class RedisCache(object):
         Get value with key firstly from Redis
         but if it fails then from local cache
         """
-        value = self.cache.get(key)
-        self.log.info("received value: %s from inner cache", value)
+        value = self.conn.get(key)
+        if value is None:
+            self.log.info("there is no such key: %s in Redis", key)
+            value = self.cache.get(key)
         return value
 
     def cache_set(self, key, value, expired=None):
         self.cache[key] = value
         self.log.info("set key: %s with value: %s to "
                       "inner store", key, value)
+        self.conn.set(key, value, ex=expired)
 
     def get(self, key):
         """ Retrive value from Redis """
+        self.log.info("receiving value by key: %s from Redis", key)
+        return self.conn.get(key)
 
     def set(self, key, value):
         """ Save value directly to Redis """
+        self.log.info("saving value: %s with key: %s to Redis", value, key)
+        self.conn.set(key, value)
 
