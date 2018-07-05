@@ -34,26 +34,30 @@ class RedisCache(object):
         self.log = log if log else get_log()
         self.cache = {}
 
-        self.conn = redis.StrictRedis(
-            host=self.config["HOST"],
-            port=self.config["PORT"],
-            db=self.config["DB"],
-            socket_timeout=self.config["SOCKET_TIMEOUT"]
-        )
-
-    @staticmethod
-    def ensure_connection(method):
-        @wraps(method)
-        def wrapper(self, *args, **kwargs):
-            return method(self, *args, **kwargs)
-        return wrapper
+        for _ in range(self.config["ATTEMPTS"]):
+            self.conn = redis.StrictRedis(
+                host=self.config["HOST"],
+                port=self.config["PORT"],
+                db=self.config["DB"],
+                socket_timeout=self.config["SOCKET_TIMEOUT"]
+            )
+            try:
+                self.conn.ping()
+                break
+            except redis.ConnectionError:
+                time.sleep(self.config["SLEEP_TIMEOUT"])
 
     def cache_get(self, key):
         """
         Get value with key firstly from Redis
         but if it fails then from local cache
         """
-        value = self.conn.get(key)
+        try:
+            value = self.conn.get(key)
+        except redis.ConnectionError:
+            self.log.error("Redis is down. Please reload Redis sever")
+            value = None
+
         if value is None:
             self.log.info("there is no such key: %s in Redis", key)
             value = self.cache.get(key)
@@ -63,7 +67,11 @@ class RedisCache(object):
         self.cache[key] = value
         self.log.info("set key: %s with value: %s to "
                       "inner store", key, value)
-        self.conn.set(key, value, ex=expired)
+        try:
+            self.conn.set(key, value, ex=expired)
+        except redis.ConnectionError:
+            self.log.error("Error on setting key: %s with value: %s. "
+                           "Redis is down.", key, value)
 
     def get(self, key):
         """ Retrive value from Redis """
