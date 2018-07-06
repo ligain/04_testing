@@ -9,7 +9,7 @@ import uuid
 
 from optparse import OptionParser
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from collections import defaultdict, Sequence, Sized
+from collections import Sequence, Sized
 
 from scoring import get_score, get_interests
 
