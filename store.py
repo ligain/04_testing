@@ -2,15 +2,13 @@ import redis
 import logging
 import time
 
-from functools import wraps
-
 # Example of Redis config
 REDIS_CONFIG = {
     "HOST": "localhost",
     "PORT": 6379,
     "DB": 0,
     "ATTEMPTS": 5,
-    "SLEEP_TIMEOUT": 3,  # in seconds
+    "SLEEP_TIMEOUT": 3,   # in seconds
     "SOCKET_TIMEOUT": 5,
 }
 
@@ -64,7 +62,7 @@ class RedisCache(object):
         return value
 
     def cache_set(self, key, value, expired=None):
-        self.cache[key] = value
+        self.cache[key] = str(value)
         self.log.info("set key: %s with value: %s to "
                       "inner store", key, value)
         try:

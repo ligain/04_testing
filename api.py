@@ -12,6 +12,7 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from collections import Sequence, Sized
 
 from scoring import get_score, get_interests
+from store import RedisCache, REDIS_CONFIG
 
 SALT = "Otus"
 ADMIN_LOGIN = "admin"
@@ -317,7 +318,7 @@ class MainHTTPHandler(BaseHTTPRequestHandler):
     router = {
         "method": method_handler
     }
-    store = None
+    store = RedisCache(config=REDIS_CONFIG)
 
     def get_request_id(self, headers):
         return headers.get('HTTP_X_REQUEST_ID', uuid.uuid4().hex)
