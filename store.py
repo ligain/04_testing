@@ -2,6 +2,8 @@ import redis
 import logging
 import time
 
+from functools import wraps
+
 # Example of Redis config
 REDIS_CONFIG = {
     "HOST": "localhost",
@@ -23,6 +25,33 @@ def get_log():
     return logger
 
 
+def ensure_connection(method):
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if self.conn is None:
+            attempts = self.config["ATTEMPTS"]
+            while True:
+                self.conn = redis.StrictRedis(
+                    host=self.config["HOST"],
+                    port=self.config["PORT"],
+                    db=self.config["DB"],
+                    socket_timeout=self.config["SOCKET_TIMEOUT"]
+                )
+                try:
+                    self.conn.ping()
+                    break
+                except redis.ConnectionError, redis.TimeoutError:
+                    time.sleep(self.config["SLEEP_TIMEOUT"])
+                if attempts == -1 or attempts is None:
+                    continue
+                elif isinstance(attempts, int) and attempts > 0:
+                    attempts -= 1
+                else:
+                    break
+        return method(self, *args, **kwargs)
+    return wrapper
+
+
 class RedisCache(object):
     def __init__(self, config, log=None):
         if not config:
@@ -31,20 +60,18 @@ class RedisCache(object):
 
         self.log = log if log else get_log()
         self.cache = {}
+        self.conn = None
 
-        for _ in range(self.config["ATTEMPTS"]):
-            self.conn = redis.StrictRedis(
-                host=self.config["HOST"],
-                port=self.config["PORT"],
-                db=self.config["DB"],
-                socket_timeout=self.config["SOCKET_TIMEOUT"]
-            )
-            try:
-                self.conn.ping()
-                break
-            except redis.ConnectionError:
-                time.sleep(self.config["SLEEP_TIMEOUT"])
+    def connect(self):
+        self.conn = redis.StrictRedis(
+            host=self.config["HOST"],
+            port=self.config["PORT"],
+            db=self.config["DB"],
+            socket_timeout=self.config["SOCKET_TIMEOUT"]
+        )
+        return self
 
+    @ensure_connection
     def cache_get(self, key):
         """
         Get value with key firstly from Redis
@@ -61,6 +88,7 @@ class RedisCache(object):
             value = self.cache.get(key)
         return value
 
+    @ensure_connection
     def cache_set(self, key, value, expired=None):
         self.cache[key] = str(value)
         self.log.info("set key: %s with value: %s to "
@@ -71,13 +99,20 @@ class RedisCache(object):
             self.log.error("Error on setting key: %s with value: %s. "
                            "Redis is down.", key, value)
 
+    @ensure_connection
     def get(self, key):
         """ Retrive value from Redis """
         self.log.info("receiving value by key: %s from Redis", key)
         return self.conn.get(key)
 
+    @ensure_connection
     def set(self, key, value):
         """ Save value directly to Redis """
         self.log.info("saving value: %s with key: %s to Redis", value, key)
         self.conn.set(key, value)
 
+    @ensure_connection
+    def delete(self, key):
+        """ Delete key directly from Redis """
+        self.log.info("delete key: %s from Redis", key)
+        self.conn.delete(key)

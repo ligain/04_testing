@@ -51,9 +51,9 @@ def redis_set_data(data):
         redis_store.delete(*data.keys())
 
 
-@pytest.mark.xpass
 def test_api_availability(api_request):
-    api_request()
+    resp = api_request()
+    assert api.BAD_REQUEST == resp.status_code
 
 
 @pytest.mark.parametrize("data", [
