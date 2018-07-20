@@ -30,7 +30,7 @@ class RedisCache(object):
         self.config = config
 
         self.log = log if log else get_log()
-        self.cache = {}
+        # self.cache = {}
 
         for _ in range(self.config["ATTEMPTS"]):
             self.conn = redis.StrictRedis(
@@ -56,15 +56,15 @@ class RedisCache(object):
             self.log.error("Redis is down. Please reload Redis sever")
             value = None
 
-        if value is None:
-            self.log.info("there is no such key: %s in Redis", key)
-            value = self.cache.get(key)
+        # if value is None:
+        #     self.log.info("there is no such key: %s in Redis", key)
+        #     value = self.cache.get(key)
         return value
 
     def cache_set(self, key, value, expired=None):
-        self.cache[key] = str(value)
-        self.log.info("set key: %s with value: %s to "
-                      "inner store", key, value)
+        # self.cache[key] = str(value)
+        # self.log.info("set key: %s with value: %s to "
+        #               "inner store", key, value)
         try:
             self.conn.set(key, value, ex=expired)
         except redis.ConnectionError:

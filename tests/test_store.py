@@ -38,7 +38,7 @@ def test_read_wrong_key_from_store(redis_store):
 
 def test_cache_store_with_wrong_redis_conn(redis_bad_store):
     redis_bad_store.cache_set("test_key", 42)
-    assert redis_bad_store.cache_get("test_key") == "42"
+    assert redis_bad_store.cache_get("test_key") is None
     with pytest.raises(redis.ConnectionError):
         redis_bad_store.set("test_key", 42)
         redis_bad_store.get("test_key")
