@@ -56,6 +56,7 @@ def test_save_value_with_expiration(redis_store):
     redis_store.set("test_key_with_expiration2", 42)
     redis_store.cache_set("test_key_with_expiration3", [1, 2, 3], 1)
     time.sleep(3)
-    assert redis_store.cache_get("test_key_with_expiration") == "42"
+    assert redis_store.cache_get("test_key_with_expiration") is None
     assert redis_store.get("test_key_with_expiration2") == str(42)
     assert redis_store.get("test_key_with_expiration3") is None
+    redis_store.delete("test_key_with_expiration2")

@@ -250,7 +250,7 @@ class OnlineScoreHandler(RequestHandler):
             )
         ctx["has"] = [field_name for field_name, field_value in arguments.fields.items()
                       if getattr(arguments, field_name) is not None]
-        return {"score": score}, OK
+        return {"score": str(score)}, OK
 
 
 class ClientsInterestsHandler(RequestHandler):
