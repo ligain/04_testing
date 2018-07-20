@@ -18,16 +18,23 @@ REDIS_BAD_CONFIG = {
 
 @pytest.fixture
 def redis_store(config=REDIS_CONFIG):
-    return RedisCache(config=config)
+    return RedisCache(config=config).connect()
 
 
 @pytest.fixture
 def redis_bad_store(config=REDIS_BAD_CONFIG):
-    return RedisCache(config=config)
+    return RedisCache(config=config).connect()
 
 
 def test_store_connection(redis_store):
     assert redis_store.conn.ping(), "Redis is down"
+
+
+def test_redis_reconnect(redis_store):
+    redis_store.conn = None
+    redis_store.set("test_reconnect_key", "42")
+    assert "42" == redis_store.get("test_reconnect_key")
+    redis_store.delete("test_reconnect_key")
 
 
 def test_read_wrong_key_from_store(redis_store):

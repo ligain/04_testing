@@ -1,10 +1,11 @@
 
-# Unit and integration tests for skoring API
+# Unit and integration tests for scoring API
 It's extended set or tests for Scoring API.
 It includes:
 - tests for fields in file: `test_fields.py`
 - tests for store in file: `test_store.py`
 - integration test for API in file: `test_integration.py`
+
 *Before running integration tests the API in `api.py` and `redis-server` should be up and running on your machine*
 
 ## How to run
